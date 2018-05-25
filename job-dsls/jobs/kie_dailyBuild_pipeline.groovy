@@ -1,9 +1,10 @@
 // definition of parameters (will change with each branch)
 
-def javadk="jdk1.8"
-def jaydekay="JDK1_8"
-def mvnToolEnv="APACHE_MAVEN_3_3_9"
-def mvnVersion="apache-maven-3.3.9"
+def javaVersion="kie-jdk1.8"
+def javaToolEnv="KIE_JDK1_8"
+def mvnToolEnv="KIE_MAVEN_3_3_9"
+def mvnVersion="kie-maven-3.3.9"
+def dockerMvnVersion="maven-3.3.9"
 def mvnHome="${mvnToolEnv}_HOME"
 def mvnOpts="-Xms1g -Xmx3g"
 def kieMainBranch="master"
@@ -14,6 +15,13 @@ def erraiBranch="master"
 def erraiVersionOld="4.3.0-SNAPSHOT"
 def erraiVersionNew="4.3.0"
 def organization="kiegroup"
+
+// creation of folder
+folder ("KIE")
+folder("KIE/master")
+folder("KIE/master/dailyBuilds")
+
+def folderPath="KIE/master/dailyBuilds"
 
 // definition of pipeline jobs
 
@@ -102,9 +110,9 @@ pipeline {
   }
 }'''
 
-pipelineJob("kieAllBuildPipeline-${kieMainBranch}") {
+pipelineJob("${folderPath}/kieAllBuildPipeline-${kieMainBranch}") {
 
-    description('this is a pipeline job that triggers all other jobs with it\'s parameters needed for the kieAllBuild')
+    description('this is a pipeline job that triggers all other jobs with it\'s parameters needed for the kieAllBuild TEST TEST TEST')
 
     label('master')
 
@@ -125,7 +133,7 @@ pipelineJob("kieAllBuildPipeline-${kieMainBranch}") {
     }
 
     triggers {
-        cron("H 22 * * *")
+        cron("H 3 * * *")
     }
 
     definition {
@@ -169,7 +177,7 @@ curl --upload-file kiegroup.zip -u $kieUnpack -v http://bxms-qe.rhev-ci-vms.eng.
 '''
 
 
-job("errai-kieAllBuild-${kieMainBranch}") {
+job("${folderPath}/errai-kieAllBuild-${kieMainBranch}") {
     description("Upgrades and builds the errai version")
     parameters{
         stringParam("erraiVersionNew", "${erraiVersionNew}", "Version of Errai. This will be usually set automatically by the parent trigger job. ")
@@ -177,13 +185,13 @@ job("errai-kieAllBuild-${kieMainBranch}") {
         stringParam("erraiBranch", "${erraiBranch}", "Branch of errai. This will be usually set automatically by the parent trigger job. ")
     }
 
-    label("rhel7&&mem4g")
+    label("kie-rhel7&&kie-mem4g")
 
     logRotator {
         numToKeep(10)
     }
 
-    jdk("${javadk}")
+    jdk("${javaVersion}")
 
     wrappers {
         timeout {
@@ -191,10 +199,10 @@ job("errai-kieAllBuild-${kieMainBranch}") {
         }
         timestamps()
         colorizeOutput()
-        toolenv("${mvnToolEnv}", "${jaydekay}")
+        toolenv("${mvnToolEnv}", "${javaToolEnv}")
         preBuildCleanup()
         configFiles {
-            mavenSettings("32d15210-2955-4894-93fe-b7b53e0f2e5e"){
+            mavenSettings("771ff52a-a8b4-40e6-9b22-d54c7314aa1e"){
                 variable("SETTINGS_XML_FILE")
             }
         }
@@ -332,7 +340,7 @@ rm sedExtraction*
 rm int.json
 '''
 
-job("kieAllBuild-${kieMainBranch}") {
+job("${folderPath}/kieAllBuild-${kieMainBranch}") {
     description("Upgrades and builds the kie version")
 
     parameters{
@@ -342,13 +350,13 @@ job("kieAllBuild-${kieMainBranch}") {
         stringParam("kieMainBranch", "${kieMainBranch}", "branch of kie. This will be usually set automatically by the parent trigger job. ")
     }
 
-    label("linux&&rhel7&&mem24g")
+    label("kie-linux&&kie-rhel7&&kie-mem24g")
 
     logRotator {
         numToKeep(10)
     }
 
-    jdk("${javadk}")
+    jdk("${javaVersion}")
 
     wrappers {
         timeout {
@@ -356,10 +364,10 @@ job("kieAllBuild-${kieMainBranch}") {
         }
         timestamps()
         colorizeOutput()
-        toolenv("${mvnToolEnv}", "${jaydekay}")
+        toolenv("${mvnToolEnv}", "${javaToolEnv}")
         preBuildCleanup()
         configFiles {
-            mavenSettings("32d15210-2955-4894-93fe-b7b53e0f2e5e"){
+            mavenSettings("771ff52a-a8b4-40e6-9b22-d54c7314aa1e"){
                 variable("SETTINGS_XML_FILE")
             }
         }
@@ -469,7 +477,7 @@ EOT
 tar czf prodBranches.tgz *
 '''
 
-job("prod-kieAllBuild-${kieMainBranch}") {
+job("${folderPath}/prod-kieAllBuild-${kieMainBranch}") {
 
     description("Upgrades and builds the prod kie version")
 
@@ -494,13 +502,13 @@ job("prod-kieAllBuild-${kieMainBranch}") {
         }
     }
 
-    label("linux&&rhel7&&mem24g")
+    label("kie-linux&&kie-rhel7&&kie-mem24g")
 
     logRotator {
         numToKeep(5)
     }
 
-    jdk("${javadk}")
+    jdk("${javaVersion}")
 
     wrappers {
         timeout {
@@ -508,10 +516,10 @@ job("prod-kieAllBuild-${kieMainBranch}") {
         }
         timestamps()
         colorizeOutput()
-        toolenv("${mvnToolEnv}", "${jaydekay}")
+        toolenv("${mvnToolEnv}", "${javaToolEnv}")
         preBuildCleanup()
         configFiles {
-            mavenSettings("32d15210-2955-4894-93fe-b7b53e0f2e5e"){
+            mavenSettings("771ff52a-a8b4-40e6-9b22-d54c7314aa1e"){
                 variable("SETTINGS_XML_FILE")
             }
         }
@@ -558,15 +566,15 @@ mv jbpm-$kieVersion/* .
 rmdir jbpm-$kieVersion
 '''
 
-matrixJob("jbpmTestCoverageMatrix-kieAllBuild-${kieMainBranch}") {
+matrixJob("${folderPath}/jbpmTestCoverageMatrix-kieAllBuild-${kieMainBranch}") {
     description("This job: <br> - Test coverage Matrix for jbpm <br> IMPORTANT: Created automatically by Jenkins job DSL plugin. Do not edit manually! The changes will get lost next time the job is generated.")
     parameters {
         stringParam("kieVersion", "kie version", "please edit the version of the KIE release <br> i.e. typically <b> major.minor.micro.<extension> </b>7.1.0.Beta1 for <b> community </b>or <b> major.minor.micro.<yyymmdd>-productized </b>(7.1.0.20170514-productized) for <b> productization </b> <br> Version to test. Will be supplied by the parent job. <br> Normally the KIE_VERSION will be supplied by parent job <br> ******************************************************** <br> ")
     }
 
     axes {
-        labelExpression("label-exp","linux&&mem8g")
-        jdk("${javadk}")
+        labelExpression("label-exp","kie-linux&&kie-mem8g")
+        jdk("${javaVersion}")
     }
 
     logRotator {
@@ -581,7 +589,7 @@ matrixJob("jbpmTestCoverageMatrix-kieAllBuild-${kieMainBranch}") {
         colorizeOutput()
         preBuildCleanup()
         configFiles {
-            mavenSettings("32d15210-2955-4894-93fe-b7b53e0f2e5e"){
+            mavenSettings("771ff52a-a8b4-40e6-9b22-d54c7314aa1e"){
                 variable("SETTINGS_XML_FILE")
             }
         }
@@ -610,7 +618,7 @@ matrixJob("jbpmTestCoverageMatrix-kieAllBuild-${kieMainBranch}") {
             goals("clean verify -e -B -Dmaven.test.failure.ignore=true -Dintegration-tests")
             rootPOM("jbpm-test-coverage/pom.xml")
             mavenOpts("-Xmx3g")
-            providedSettings("32d15210-2955-4894-93fe-b7b53e0f2e5e")
+            providedSettings("771ff52a-a8b4-40e6-9b22-d54c7314aa1e")
         }
     }
 }
@@ -626,15 +634,15 @@ mv jbpm-$kieVersion/* .
 rmdir jbpm-$kieVersion
 '''
 
-matrixJob("jbpmTestContainerMatrix-kieAllBuild-${kieMainBranch}") {
+matrixJob("${folderPath}/jbpmTestContainerMatrix-kieAllBuild-${kieMainBranch}") {
     description("Version to test. Will be supplied by the parent job. Also used to donwload proper sources. <br> IMPORTANT: Created automatically by Jenkins job DSL plugin. Do not edit manually! The changes will get lost next time the job is generated.")
     parameters {
         stringParam("kieVersion", "kie version", "please edit the version of the KIE release <br> i.e. typically <b> major.minor.micro.<extension> </b>7.1.0.Beta1 for <b> community </b>or <b> major.minor.micro.<yyymmdd>-productized </b>(7.1.0.20170514-productized) for <b> productization </b> <br> Version to test. Will be supplied by the parent job. <br> Normally the KIE_VERSION will be supplied by parent job <br> ******************************************************** <br> ")
     }
 
     axes {
-        labelExpression("label-exp","rhel7&&mem8g")
-        jdk("${javadk}")
+        labelExpression("label-exp","kie-rhel7&&kie-mem8g")
+        jdk("${javaVersion}")
         text("container", "tomcat8", "wildfly11")
     }
 
@@ -652,7 +660,7 @@ matrixJob("jbpmTestContainerMatrix-kieAllBuild-${kieMainBranch}") {
         colorizeOutput()
         preBuildCleanup()
         configFiles {
-            mavenSettings("32d15210-2955-4894-93fe-b7b53e0f2e5e"){
+            mavenSettings("771ff52a-a8b4-40e6-9b22-d54c7314aa1e"){
                 variable("SETTINGS_XML_FILE")
             }
         }
@@ -681,7 +689,7 @@ matrixJob("jbpmTestContainerMatrix-kieAllBuild-${kieMainBranch}") {
             goals("-e -B clean install")
             rootPOM("jbpm-container-test/pom.xml")
             mavenOpts("-Xmx3g")
-            providedSettings("32d15210-2955-4894-93fe-b7b53e0f2e5e")
+            providedSettings("771ff52a-a8b4-40e6-9b22-d54c7314aa1e")
             properties("maven.test.failure.ignore": true)
             properties("container.profile":"\$container")
             properties("org.apache.maven.user-settings":"\$SETTINGS_XML_FILE")
@@ -699,7 +707,7 @@ tar xzf sources.tar.gz
 mv kie-wb-distributions-$kieVersion/* .
 rmdir kie-wb-distributions-$kieVersion'''
 
-matrixJob("kieWbTestsMatrix-kieAllBuild-${kieMainBranch}") {
+matrixJob("${folderPath}/kieWbTestsMatrix-kieAllBuild-${kieMainBranch}") {
     description("This job: <br> - Runs the KIE Server integration tests on mutiple supported containers and JDKs <br> IMPORTANT: Created automatically by Jenkins job DSL plugin. Do not edit manually! The changes will get lost next time the job is generated. ")
 
     parameters {
@@ -707,10 +715,10 @@ matrixJob("kieWbTestsMatrix-kieAllBuild-${kieMainBranch}") {
     }
 
     axes {
-        labelExpression("label_exp", "linux&&mem8g&&gui-testing")
+        labelExpression("label_exp", "kie-linux&&kie-mem8g&&gui-testing")
         text("container", "wildfly11", "eap7", "tomcat8")
         text("war","kie-wb","kie-drools-wb")
-        jdk("${javadk}")
+        jdk("${javaVersion}")
         text("browser","firefox")
     }
 
@@ -740,7 +748,7 @@ matrixJob("kieWbTestsMatrix-kieAllBuild-${kieMainBranch}") {
         colorizeOutput()
         preBuildCleanup()
         configFiles {
-            mavenSettings("32d15210-2955-4894-93fe-b7b53e0f2e5e") {
+            mavenSettings("771ff52a-a8b4-40e6-9b22-d54c7314aa1e") {
                 variable("SETTINGS_XML_FILE")
             }
         }
@@ -777,7 +785,7 @@ matrixJob("kieWbTestsMatrix-kieAllBuild-${kieMainBranch}") {
             properties("webdriver.firefox.bin":"/opt/tools/firefox-45esr/firefox-bin")
             properties("eap7.download.url":"http://download.devel.redhat.com/released/JBEAP-7/7.1.0/jboss-eap-7.1.0.zip")
             mavenOpts("-Xms1024m -Xmx1536m")
-            providedSettings("32d15210-2955-4894-93fe-b7b53e0f2e5e")
+            providedSettings("771ff52a-a8b4-40e6-9b22-d54c7314aa1e")
         }
     }
 }
@@ -792,7 +800,7 @@ tar xzf sources.tar.gz
 mv droolsjbpm-integration-$kieVersion/* .
 rmdir droolsjbpm-integration-$kieVersion'''
 
-matrixJob("kieServerMatrix-kieAllBuild-${kieMainBranch}") {
+matrixJob("${folderPath}/kieServerMatrix-kieAllBuild-${kieMainBranch}") {
     description("This job: <br> - Runs the KIE Server integration tests on mutiple supported containers and JDKs <br> IMPORTANT: Created automatically by Jenkins job DSL plugin. Do not edit manually! The changes will get lost next time the job is generated. ")
 
     // Label which specifies which nodes this job can run on.
@@ -803,9 +811,9 @@ matrixJob("kieServerMatrix-kieAllBuild-${kieMainBranch}") {
     }
 
     axes {
-        jdk("${javadk}")
+        jdk("${javaVersion}")
         text("container", "wildfly11", "eap7", "tomcat8")
-        labelExpression("label_exp", "linux&&mem8g")
+        labelExpression("label_exp", "kie-linux&&kie-mem8g")
     }
 
     childCustomWorkspace("\${SHORT_COMBINATION}")
@@ -822,7 +830,7 @@ matrixJob("kieServerMatrix-kieAllBuild-${kieMainBranch}") {
         colorizeOutput()
         preBuildCleanup()
         configFiles {
-            mavenSettings("32d15210-2955-4894-93fe-b7b53e0f2e5e") {
+            mavenSettings("771ff52a-a8b4-40e6-9b22-d54c7314aa1e") {
                 variable("SETTINGS_XML_FILE")
             }
         }
@@ -856,7 +864,7 @@ matrixJob("kieServerMatrix-kieAllBuild-${kieMainBranch}") {
             properties("container.startstop.timeout.millis":"240000")
             properties("eap7.download.url":"http://download.devel.redhat.com/released/JBEAP-7/7.1.0/jboss-eap-7.1.0.zip")
             mavenOpts("-Xms1024m -Xmx1536m")
-            providedSettings("32d15210-2955-4894-93fe-b7b53e0f2e5e")
+            providedSettings("771ff52a-a8b4-40e6-9b22-d54c7314aa1e")
         }
     }
 }
@@ -881,7 +889,7 @@ for %%x in (%repo_list%) do (
     )
 )'''
 
-job("windows-kieAllBuild-${kieMainBranch}") {
+job("${folderPath}/windows-kieAllBuild-${kieMainBranch}") {
     disabled ()
     description("Builds all repos specified in\n" +
             "<a href=\"https://github.com/droolsjbpm/droolsjbpm-build-bootstrap/blob/master/script/repository-list.txt\">repository-list.txt</a> (master branch) on Windows machine.\n" +
@@ -897,7 +905,7 @@ job("windows-kieAllBuild-${kieMainBranch}") {
         numToKeep(10)
     }
 
-    jdk("${javadk}")
+    jdk("${javaVersion}")
 
     wrappers {
         timeout {
@@ -944,7 +952,7 @@ def kieDockerCi='''
 sh scripts/docker-clean.sh $kieVersion
 sh scripts/update-versions.sh $kieVersion -s "$SETTINGS_XML"'''
 
-job("kie-docker-ci-images-${kieMainBranch}") {
+job("${folderPath}/kie-docker-ci-images-${kieMainBranch}") {
     description("Builds CI Docker images for master branch. <br> IMPORTANT: Created automatically by Jenkins job DSL plugin. Do not edit manually! The changes will get lost next time the job is generated. ")
 
     parameters {
@@ -960,13 +968,13 @@ job("kie-docker-ci-images-${kieMainBranch}") {
         }
     }
 
-    label("kieci-02")
+    label("kie-linux&&kie-mem8g")
 
     logRotator {
         numToKeep(10)
     }
 
-    jdk("${javadk}")
+    jdk("${javaVersion}")
 
     wrappers {
         timeout {
@@ -976,7 +984,7 @@ job("kie-docker-ci-images-${kieMainBranch}") {
         colorizeOutput()
         preBuildCleanup()
         configFiles {
-            mavenSettings("org.jenkinsci.plugins.configfiles.maven.MavenSettingsConfig1438340407905"){
+            mavenSettings("3ebb89ff-985c-43a2-965d-1cde56f31e1a"){
                 targetLocation("\$WORKSPACE/settings.xml")
                 variable("SETTINGS_XML")
             }
@@ -1000,39 +1008,17 @@ job("kie-docker-ci-images-${kieMainBranch}") {
 
     steps {
         environmentVariables {
-            envs(MAVEN_HOME : "/opt/tools/${mvnVersion}", PATH : "/opt/tools/${mvnVersion}/bin:\$PATH")
+            envs(MAVEN_HOME : "/opt/tools/${dockerMvnVersion}", PATH : "\$MAVEN_HOME/bin:\$PATH")
         }
         shell(kieDockerCi)
         maven{
             mavenInstallation("${mvnVersion}")
             goals("-e -B -U clean install")
-            providedSettings("org.jenkinsci.plugins.configfiles.maven.MavenSettingsConfig1438340407905")
+            providedSettings("3ebb89ff-985c-43a2-965d-1cde56f31e1a")
             properties("kie.artifacts.deploy.path":"/home/docker/kie-artifacts/\$kieVersion")
         }
     }
 }
 
 // **************************** VIEW to create on JENKINS CI *******************************************
-
-listView("kieAllBuild-${kieMainBranch}"){
-    description("all scripts needed for building a ${kieMainBranch} kieAll build")
-    jobs {
-        name("kieAllBuildPipeline-${kieMainBranch}")
-        name("errai-kieAllBuild-${kieMainBranch}")
-        name("kieAllBuild-${kieMainBranch}")
-        name("prod-kieAllBuild-${kieMainBranch}")
-        name("jbpmTestCoverageMatrix-kieAllBuild-${kieMainBranch}")
-        name("jbpmTestContainerMatrix-kieAllBuild-${kieMainBranch}")
-        name("kieWbTestsMatrix-kieAllBuild-${kieMainBranch}")
-        name("kieServerMatrix-kieAllBuild-${kieMainBranch}")
-        name("windows-kieAllBuild-${kieMainBranch}")
-        }
-	columns {
-            status()
-            weather()
-            name()
-            lastSuccess()
-            lastFailure()
-        }
-}
 
